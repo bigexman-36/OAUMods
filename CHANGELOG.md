@@ -2266,3 +2266,25 @@ Enacted and codified **Rule 5 (Strict Ground-Truth & Anti-Hallucination Policy)*
 *   `npm run lint`: **0 errors, 0 warnings**.
 *   Verified zero regression across mobile viewports (360px–420px) and offline PWA capability.
 
+
+
+---
+
+## 📅 2026-10-18 — Student Feedback Hub
+
+### 💭 Context & Feedback Received
+- A student suggested adding a dedicated place for people to leave feedback so the team can better understand what users think of OAUMods.
+
+### ✅ Decisions & Implementation
+- Added a mobile-first `/feedback` page with categories for general feedback, problem reports, feature suggestions, and campus-information corrections.
+- Added an optional 1–5 rating and optional page/place context; the form does not request names or email addresses.
+- Added a persistent Feedback shortcut and a server-side GitHub Issues submission route. The GitHub token is configured only through server-side deployment environment variables.
+- Added a transparent fallback: when direct submission is not configured or fails, users are shown a prefilled issue draft rather than a false success state.
+- Added `oaumods/FEEDBACK_SETUP.md` with environment setup and a manual smoke-test checklist.
+
+### 🧪 Verification Status
+- Confirmed the new files and global shortcut are present on the feature branch.
+- A production build and deployed submission test still need to be run. Direct no-account submission requires the deployment environment variables documented in `FEEDBACK_SETUP.md`.
+
+### ⏭️ Next Immediate Step
+- Configure the feedback token on the deployment, test a real submission, and review the proposed changes before merging.
