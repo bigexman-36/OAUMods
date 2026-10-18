@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import FeedbackShortcut from "@/components/FeedbackShortcut";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 
 const geistSans = Geist({
@@ -167,6 +168,7 @@ export default function RootLayout({
         <GlobalErrorBoundary>
           {children}
         </GlobalErrorBoundary>
+        <FeedbackShortcut />
         <Analytics />
         <SpeedInsights />
       </body>
