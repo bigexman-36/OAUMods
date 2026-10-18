@@ -5,14 +5,16 @@ import Link from 'next/link';
 import {
   ArrowLeft,
   CheckCircle2,
-  ExternalLink,
   Lightbulb,
   MessageSquareText,
   ShieldCheck,
   Star,
   Bug,
   MapPin,
+  Send,
 } from 'lucide-react';
+
+const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mrpedlyz';
 
 const categories = [
   { value: 'General feedback', label: 'General feedback', detail: 'Tell us what works or what could be better.', icon: MessageSquareText },
@@ -29,29 +31,47 @@ export default function FeedbackPage() {
   const [pageOrPlace, setPageOrPlace] = useState('');
   const [rating, setRating] = useState<number | null>(null);
   const [website, setWebsite] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'manual' | 'error'>('idle');
-  const [manualUrl, setManualUrl] = useState('');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [error, setError] = useState('');
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError('');
+
+    // Honeypot: quietly ignore automated submissions.
+    if (website.trim()) {
+      setStatus('success');
+      return;
+    }
+
     setStatus('sending');
 
     try {
-      const response = await fetch('/api/feedback', {
+      const response = await fetch(FORMSPREE_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, message: message.trim(), pageOrPlace: pageOrPlace.trim(), rating, website }),
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          _subject: `[OAUMods Feedback] ${category}`,
+          category,
+          message: message.trim(),
+          pageOrPlace: pageOrPlace.trim() || 'Not specified',
+          rating: rating === null ? 'Not provided' : `${rating}/5`,
+          source: 'OAUMods student feedback page',
+          website,
+        }),
       });
-      const result = await response.json();
 
-      if (result.mode === 'manual' && result.url) {
-        setManualUrl(result.url);
-        setStatus('manual');
-        return;
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const formspreeError = Array.isArray(result?.errors)
+          ? result.errors.map((item: { message?: string }) => item.message).filter(Boolean).join(' ')
+          : '';
+        throw new Error(formspreeError || 'We could not send your feedback. Please try again.');
       }
-      if (!response.ok || !result.ok) throw new Error(result.error || 'We could not send your feedback right now.');
+
       setStatus('success');
       setMessage('');
       setPageOrPlace('');
@@ -100,15 +120,8 @@ export default function FeedbackPage() {
             <div role="status" className="rounded-xl border border-emerald-200 bg-emerald-50 p-5">
               <CheckCircle2 className="mb-2 h-7 w-7 text-emerald-700" />
               <h2 className="text-lg font-bold text-emerald-950">Thank you for helping OAUMods grow.</h2>
-              <p className="mt-1 text-sm leading-6 text-emerald-900">Your feedback has been submitted to the team. We appreciate you taking the time to help.</p>
-              <button type="button" onClick={() => setStatus('idle')} className="mt-4 rounded-lg bg-white px-4 py-2 text-sm font-bold text-emerald-900 ring-1 ring-emerald-200 hover:bg-emerald-100">Send another response</button>
-            </div>
-          ) : status === 'manual' ? (
-            <div role="status" className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-              <h2 className="text-lg font-bold text-amber-950">One more step</h2>
-              <p className="mt-1 text-sm leading-6 text-amber-900">The direct feedback inbox is not connected on this deployment yet. Your message is ready in the project’s feedback form; open it to finish sending.</p>
-              <a href={manualUrl} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-2 rounded-lg bg-oau-navy px-4 py-2.5 text-sm font-bold text-white hover:bg-campus-blue">Open feedback form <ExternalLink className="h-4 w-4" /></a>
-              <button type="button" onClick={() => setStatus('idle')} className="ml-3 mt-4 text-sm font-semibold text-slate-600 underline">Back to form</button>
+              <p className="mt-1 text-sm leading-6 text-emerald-900">Your feedback has been submitted. We appreciate you taking the time to help.</p>
+              <button type="button" onClick={() => { setStatus('idle'); setError(''); }} className="mt-4 rounded-lg bg-white px-4 py-2 text-sm font-bold text-emerald-900 ring-1 ring-emerald-200 hover:bg-emerald-100">Send another response</button>
             </div>
           ) : (
             <>
@@ -167,7 +180,7 @@ export default function FeedbackPage() {
               <div className="border-t border-slate-200 pt-5">
                 <button type="submit" disabled={status === 'sending' || message.trim().length < 12}
                   className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-oau-navy px-5 py-3 text-sm font-bold text-white transition hover:bg-campus-blue disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
-                  {status === 'sending' ? 'Sending feedback…' : 'Send feedback'} <ExternalLink className="h-4 w-4" />
+                  {status === 'sending' ? 'Sending feedback…' : 'Send feedback'} <Send className="h-4 w-4" />
                 </button>
                 <p className="mt-3 text-xs leading-5 text-slate-500">Feedback is used to improve OAUMods. You can submit without giving your name or contact details.</p>
               </div>
