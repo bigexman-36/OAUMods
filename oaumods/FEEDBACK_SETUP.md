@@ -17,6 +17,8 @@ Set it in the `oaumods` app's local environment (for local testing) or the deplo
 3. Submit a test from the deployed `/feedback` page.
 4. Check Formspree's submissions dashboard and destination inbox, including spam.
 5. Simulate a failed request and confirm the page shows an error instead of a success message.
+6. Confirm a request that takes longer than 15 seconds times out with a retryable error.
+7. Confirm the page only displays success when Formspree returns a successful JSON response (`ok: true`).
 
 No GitHub token, GitHub issue integration, or server-side environment variable is used by this implementation. Do not add secrets to client-side code.
 
@@ -36,5 +38,6 @@ The form does not ask for a name or email. A hidden honeypot field discourages b
 3. Submit a message shorter than 12 characters; it should be blocked.
 4. Submit a valid test message and confirm it appears in Formspree.
 5. Confirm a filled honeypot never displays the success message.
-6. Confirm network failures show an error and allow retrying.
-7. Confirm the floating shortcut opens the page and is hidden on the feedback page itself.
+6. Confirm network failures and timeouts show an error and allow retrying.
+7. Confirm an HTTP-success response without Formspree's `ok: true` confirmation is not shown as successful.
+8. Confirm the floating shortcut opens the page and is hidden on the feedback page itself.
