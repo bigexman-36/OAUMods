@@ -14,7 +14,9 @@ import {
   Send,
 } from 'lucide-react';
 
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mrpedlyz';
+const FORMSPREE_ENDPOINT =
+  process.env.NEXT_PUBLIC_FORMSPREE_ENDPOINT?.trim() ||
+  'https://formspree.io/f/mrpedlyz';
 
 const categories = [
   { value: 'General feedback', label: 'General feedback', detail: 'Tell us what works or what could be better.', icon: MessageSquareText },
@@ -38,9 +40,10 @@ export default function FeedbackPage() {
     event.preventDefault();
     setError('');
 
-    // Honeypot: quietly ignore automated submissions.
+    // Never show a success state unless Formspree confirms submission.
     if (website.trim()) {
-      setStatus('success');
+      setError('We could not send your feedback. Please check the form and try again.');
+      setStatus('error');
       return;
     }
 
