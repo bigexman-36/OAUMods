@@ -49,6 +49,9 @@ export default function FeedbackPage() {
 
     setStatus('sending');
 
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 15000);
+
     try {
       const response = await fetch(FORMSPREE_ENDPOINT, {
         method: 'POST',
@@ -56,6 +59,7 @@ export default function FeedbackPage() {
           Accept: 'application/json',
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           _subject: `[OAUMods Feedback] ${category}`,
           category,
@@ -67,12 +71,12 @@ export default function FeedbackPage() {
         }),
       });
 
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) {
+      const result = await response.json().catch(() => null);
+      if (!response.ok || result?.ok !== true) {
         const formspreeError = Array.isArray(result?.errors)
           ? result.errors.map((item: { message?: string }) => item.message).filter(Boolean).join(' ')
           : '';
-        throw new Error(formspreeError || 'We could not send your feedback. Please try again.');
+        throw new Error(formspreeError || 'We could not confirm delivery of your feedback. Please try again.');
       }
 
       setStatus('success');
@@ -80,8 +84,16 @@ export default function FeedbackPage() {
       setPageOrPlace('');
       setRating(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setError(
+        err instanceof Error && err.name === 'AbortError'
+          ? 'The request timed out. Please check your connection and try again.'
+          : err instanceof Error
+            ? err.message
+            : 'Something went wrong. Please try again.',
+      );
       setStatus('error');
+    } finally {
+      window.clearTimeout(timeoutId);
     }
   }
 
